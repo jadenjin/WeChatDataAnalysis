@@ -37,6 +37,23 @@
           <button type="button" class="header-btn-icon" :class="{ 'header-btn-icon-active': aiSidebarOpen }" aria-label="AI 助手" title="AI 助手" :aria-pressed="aiSidebarOpen" @click="toggleAiSidebar">AI</button>
           <button
             type="button"
+            class="header-btn-icon header-btn-jev"
+            :class="{ 'header-btn-icon-active': jevInsightsEnabled }"
+            :aria-pressed="jevInsightsEnabled"
+            :aria-expanded="jevSettingsOpen"
+            aria-controls="jev-insight-settings"
+            aria-label="Jev 消息洞察"
+            title="为本会话单独配置 Jev 分析"
+            @click="toggleJevSettings"
+          >
+            <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="m12 3-1.1 3.2a6.7 6.7 0 0 1-4.2 4.2L3.5 11.5l3.2 1.1a6.7 6.7 0 0 1 4.2 4.2L12 20l1.1-3.2a6.7 6.7 0 0 1 4.2-4.2l3.2-1.1-3.2-1.1a6.7 6.7 0 0 1-4.2-4.2L12 3Z" />
+              <path d="m19 3-.35 1.05a2.2 2.2 0 0 1-1.4 1.4L16.2 5.8l1.05.35a2.2 2.2 0 0 1 1.4 1.4L19 8.6l.35-1.05a2.2 2.2 0 0 1 1.4-1.4l1.05-.35-1.05-.35a2.2 2.2 0 0 1-1.4-1.4L19 3Z" />
+            </svg>
+            <span v-if="jevInsightsEnabled" class="header-btn-jev__dot" aria-hidden="true"></span>
+          </button>
+          <button
+            type="button"
             class="header-btn-icon"
             title="添加消息"
             aria-label="添加消息"
@@ -137,6 +154,66 @@
         </div>
       </div>
 
+      <form v-if="jevSettingsOpen" id="jev-insight-settings" class="jev-settings" @submit.prevent="applyJevSettings()">
+        <header class="jev-settings__header">
+          <span class="jev-settings__icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <path d="m12 3-1.1 3.2a6.7 6.7 0 0 1-4.2 4.2L3.5 11.5l3.2 1.1a6.7 6.7 0 0 1 4.2 4.2L12 20l1.1-3.2a6.7 6.7 0 0 1 4.2-4.2l3.2-1.1-3.2-1.1a6.7 6.7 0 0 1-4.2-4.2L12 3Z" />
+            </svg>
+          </span>
+          <div>
+            <strong>Jev 消息洞察</strong>
+            <span>当前会话设置</span>
+          </div>
+          <button type="button" class="jev-settings__close" aria-label="关闭设置" @click="jevSettingsOpen = false">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="m6 6 12 12M18 6 6 18" /></svg>
+          </button>
+        </header>
+
+        <label class="jev-settings__enable">
+          <span>
+            <strong>自动分析</strong>
+            <small>为对方发来的文本显示概率分类</small>
+          </span>
+          <input v-model="jevDraftEnabled" class="jev-settings__switch" type="checkbox" aria-label="自动分析本会话">
+        </label>
+
+        <fieldset class="jev-settings__field">
+          <legend>参考前文</legend>
+          <div class="jev-settings__context-row">
+            <div class="jev-settings__presets">
+              <button
+                v-for="count in jevContextPresets"
+                :key="count"
+                type="button"
+                :class="{ 'is-active': Number(jevDraftContextLimit) === count }"
+                @click="setJevDraftContextLimit(count)"
+              >{{ count }} 条</button>
+            </div>
+            <input id="jev-context-limit" v-model.number="jevDraftContextLimit" class="jev-settings__number" type="number" min="1" max="100" inputmode="numeric" aria-label="自定义参考前文条数">
+          </div>
+        </fieldset>
+        <label class="jev-settings__prompt">
+          <span>关系与性格 <small>可选</small></span>
+          <textarea
+            v-model="jevDraftPrompt"
+            maxlength="2000"
+            rows="3"
+            placeholder="例如：情侣；对方很在意约定，我偶尔会忘记。"
+          />
+        </label>
+        <p class="jev-settings__note">设置仅用于当前会话。你也可以右键某条消息，单独使用 Jev 分析。</p>
+        <div class="jev-settings__actions">
+          <button type="button" @click="jevSettingsOpen = false">取消</button>
+          <button type="submit">保存</button>
+        </div>
+      </form>
+
+      <div v-if="jevInsightNotice" class="jev-insight-banner" role="status">
+        <span>{{ jevInsightNotice }}</span>
+        <button type="button" @click="disableJevInsights">关闭</button>
+      </div>
+
       <div v-if="searchContext.active" class="chat-context-banner px-6 py-2 border-b border-emerald-200 bg-emerald-50 flex items-center gap-3">
         <div class="chat-context-banner-title text-sm text-emerald-900">
           {{ searchContextBannerText }}
@@ -235,4 +312,46 @@ export default defineComponent({
   .chat-header-ai > div:first-child { width: 100%; }
   .chat-header-ai > div:last-child { margin-left: 0; flex-wrap: wrap; }
 }
+.header-btn-jev { position:relative; }
+.header-btn-jev__dot { position:absolute; top:5px; right:5px; width:5px; height:5px; border:1px solid var(--chat-header-bg, #ededed); border-radius:50%; background:#07c160; }
+.jev-settings { position:absolute; z-index:45; top:48px; right:16px; display:grid; gap:14px; width:min(360px, calc(100% - 32px)); padding:16px; border:1px solid var(--app-border, #dfe3e0); border-radius:12px; background:var(--app-surface-bg, #fff); box-shadow:0 12px 36px #00000024; color:var(--app-text-primary, #252a27); font-size:12px; }
+.jev-settings__header { display:flex; align-items:center; gap:10px; padding-bottom:12px; border-bottom:1px solid var(--app-border, #e5e7e6); }
+.jev-settings__icon { display:grid; flex:none; width:32px; height:32px; place-items:center; border-radius:8px; background:color-mix(in srgb, #07c160 11%, var(--app-surface-bg, #fff)); color:#079b57; }
+.jev-settings__icon svg { width:17px; height:17px; }
+.jev-settings__header div { display:grid; min-width:0; gap:1px; }
+.jev-settings__header strong { font-size:13px; font-weight:600; }
+.jev-settings__header span { color:var(--app-text-muted, #8a918d); font-size:10px; }
+.jev-settings__close { display:grid; width:28px; height:28px; margin-left:auto; padding:0; place-items:center; border:0; border-radius:6px; background:transparent; color:var(--app-text-muted, #7b827e); cursor:pointer; }
+.jev-settings__close:hover { background:var(--app-list-hover, #f1f2f1); color:var(--app-text-primary, #252a27); }
+.jev-settings__close svg { width:15px; height:15px; }
+.jev-settings__enable { display:flex; align-items:center; justify-content:space-between; gap:16px; cursor:pointer; }
+.jev-settings__enable > span { display:grid; gap:2px; }
+.jev-settings__enable strong { font-weight:600; }
+.jev-settings__enable small,.jev-settings__note,.jev-settings__prompt small { color:var(--app-text-muted, #7b827e); font-size:10px; font-weight:400; }
+.jev-settings__switch { appearance:none; position:relative; flex:none; width:32px; height:18px; margin:0; border:0; border-radius:999px; background:var(--app-border-strong, #c6cbc8); cursor:pointer; transition:background-color .15s ease; }
+.jev-settings__switch::after { content:''; position:absolute; top:2px; left:2px; width:14px; height:14px; border-radius:50%; background:#fff; box-shadow:0 1px 3px #0003; transition:transform .15s ease; }
+.jev-settings__switch:checked { background:#07c160; }
+.jev-settings__switch:checked::after { transform:translateX(14px); }
+.jev-settings__field { min-width:0; margin:0; padding:0; border:0; }
+.jev-settings__field legend,.jev-settings__prompt > span { margin-bottom:7px; font-weight:600; }
+.jev-settings__context-row { display:flex; align-items:center; gap:8px; }
+.jev-settings__presets { display:flex; min-width:0; flex:1; gap:5px; }
+.jev-settings__presets button,.jev-settings__actions button { height:30px; border:1px solid var(--app-border, #dde1de); border-radius:6px; background:var(--app-surface-bg, #fff); color:var(--app-text-primary, #252a27); padding:0 10px; cursor:pointer; font:inherit; }
+.jev-settings__presets button { flex:1; padding:0 6px; font-size:11px; }
+.jev-settings__presets button:hover,.jev-settings__actions button:hover { background:var(--app-list-hover, #f3f4f3); }
+.jev-settings__presets button.is-active { border-color:#8bd8ae; color:#087f48; background:color-mix(in srgb, #07c160 9%, var(--app-surface-bg, #fff)); }
+.jev-settings__number { box-sizing:border-box; width:58px; height:30px; border:1px solid var(--app-border, #dde1de); border-radius:6px; background:var(--app-surface-bg, #fff); color:var(--app-text-primary, #252a27); padding:0 7px; font:inherit; }
+.jev-settings__prompt { display:grid; }
+.jev-settings__prompt textarea { box-sizing:border-box; width:100%; min-height:70px; resize:vertical; border:1px solid var(--app-border, #dde1de); border-radius:7px; outline:0; background:var(--app-surface-bg, #fff); color:var(--app-text-primary, #252a27); padding:8px 10px; font:inherit; font-weight:400; line-height:1.5; }
+.jev-settings__prompt textarea:focus,.jev-settings__number:focus { border-color:#07a85a; box-shadow:0 0 0 2px color-mix(in srgb, #07c160 13%, transparent); }
+.jev-settings__note { margin:-3px 0 0; line-height:1.55; }
+.jev-settings__actions { display:flex; justify-content:flex-end; gap:7px; padding-top:2px; }
+.jev-settings__actions button { min-width:62px; }
+.jev-settings__actions button[type='submit'] { border-color:#07a85a; background:#07a85a; color:#fff; }
+.jev-settings__actions button[type='submit']:hover { border-color:#078d4d; background:#078d4d; }
+.jev-insight-banner { display:flex; align-items:center; gap:10px; padding:7px 16px; border-bottom:1px solid #f1d48a; background:#fff8e6; color:#805b12; font-size:12px; }
+.jev-insight-banner button { margin-left:auto; border:0; background:transparent; color:inherit; cursor:pointer; font-weight:650; }
+:global(html[data-theme='dark']) .jev-insight-banner { border-color:#675626; background:#342f21; color:#e8c970; }
+@media (max-width: 640px) { .jev-settings { right:8px; width:calc(100% - 16px); } }
+@media (prefers-reduced-motion: reduce) { .jev-settings__switch,.jev-settings__switch::after { transition:none; } }
 </style>

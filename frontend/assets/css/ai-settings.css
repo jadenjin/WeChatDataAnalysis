@@ -85,6 +85,19 @@
 .ai-settings .ais-primary { background: var(--ais-green); color: white; border-color: var(--ais-green); }
 .ai-settings .ais-primary:hover { background: #07894e; }
 .ais-footnote { margin: 11px 0 0 !important; color: var(--ais-muted); font-size: 10px; line-height: 1.7; }
+.ais-classifier-card { margin-top:22px; border:1px solid var(--ais-border); border-radius:9px; background:var(--ais-bg); overflow:hidden; }
+.ais-classifier-card > header { display:flex; align-items:center; gap:11px; padding:14px 16px; border-bottom:1px solid var(--ais-border); }
+.ais-classifier-card > header > div { min-width:0; flex:1; }
+.ais-classifier-card > header h4 { font-size:13px; font-weight:600; }
+.ais-classifier-card > header p { margin-top:2px; color:var(--ais-muted); font-size:10px; }
+.ais-classifier-card > header > .ais-tag { display:inline-flex; align-items:center; gap:4px; flex:none; }
+.ai-settings .ais-classifier-toggle { min-height:28px; padding:4px 9px; font-size:10px; }
+.ais-classifier-icon { display:grid; width:32px; height:32px; place-items:center; flex:none; border-radius:8px; background:#edf8f1; color:var(--ais-green); }
+.ais-classifier-card form { display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr); gap:14px; padding:16px; }
+.ais-classifier-card form > footer { grid-column:1/-1; display:flex; align-items:center; justify-content:space-between; gap:12px; padding-top:2px; }
+.ais-classifier-card form > footer > span { color:var(--ais-muted); font-size:9px; }
+.ais-classifier-card form > footer > div { display:flex; gap:7px; }
+html[data-theme="dark"] .ais-classifier-icon { background:#173a2b; color:#65d29d; }
 .ais-feedback { display: flex; gap: 6px; align-items: center; padding: 8px 10px; margin: 10px 0 !important; border-radius: 6px; font-size: 11px; overflow-wrap: anywhere; }
 .ais-feedback.is-error { color: #b33e37; background: #fff1ee; }
 .ais-feedback.is-success { color: #087b47; background: #eff9f3; }
@@ -128,6 +141,9 @@ html[data-theme="dark"] .ais-feedback.is-error { background: #422b2b; color: #ff
   .ais-editor-footer { flex-wrap: wrap; }.ais-editor-footer > div { margin-left: auto; }
   .ais-model-controls { grid-template-columns: 1fr; }
   .ais-audit-toolbar { flex-wrap: wrap; }.ais-metrics > div { padding: 10px; }.ais-metrics strong { font-size: 21px; }
+  .ais-classifier-card form { grid-template-columns:1fr; }
+  .ais-classifier-card form > footer { flex-wrap:wrap; }
+  .ais-classifier-card form > footer > div { width:100%; justify-content:flex-end; }
 }
 @container (max-width: 380px) {
   .ais-fields { grid-template-columns: 1fr; gap: 10px; }

@@ -957,6 +957,14 @@
         复制消息 JSON
       </button>
       <button
+        v-if="isJevInsightEligible(contextMenu.message)"
+        class="chat-context-menu__item block w-full text-left px-3 py-2"
+        type="button"
+        @click="onAnalyzeJevMessageClick"
+      >
+        用 Jev 分析这条
+      </button>
+      <button
         v-if="contextMenu.message?.renderType === 'quote' && contextMenu.message?.quoteServerId"
         class="chat-context-menu__item block w-full text-left px-3 py-2"
         type="button"
@@ -1106,6 +1114,16 @@ export default defineComponent({
 
     const previewImageScaleText = computed(() => `${Math.round(previewImageScale.value * 100)}%`)
 
+    const onAnalyzeJevMessageClick = () => {
+      const menuRef = props.state?.contextMenu
+      const menu = menuRef && typeof menuRef === 'object' && 'value' in menuRef ? menuRef.value : menuRef
+      const message = menu?.message
+      const analyze = props.state?.analyzeJevMessage
+      if (!message || typeof analyze !== 'function') return
+      if (typeof props.state?.closeContextMenu === 'function') props.state.closeContextMenu()
+      void analyze(message)
+    }
+
     const onTranscribeVoiceClick = () => {
       const menuRef = props.state?.contextMenu
       const menu = menuRef && typeof menuRef === 'object' && 'value' in menuRef ? menuRef.value : menuRef
@@ -1163,6 +1181,7 @@ export default defineComponent({
       onPreviewImageWheel,
       rotatePreviewImageLeft,
       rotatePreviewImageRight,
+      onAnalyzeJevMessageClick,
       onTranscribeVoiceClick,
       canShowLocalVoiceContextAction,
       onTranscribeVoiceLocallyClick,

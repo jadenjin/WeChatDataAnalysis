@@ -81,14 +81,10 @@ pnpm-lock.yaml
 /group-before.yml
 /nul`r`ncl.exe
 
-# Native-core developer artifacts are supplied by the producer workflow.
-# Source mode downloads and verifies these native-core files into the per-user
-# runtime cache. Keep them out of the public source tree and local commits.
-/src/wechat_decrypt_tool/native/wechatdb_client.dll
-/src/wechat_decrypt_tool/native/wechatdb_broker.exe
+# Windows native-core runtime artifacts are versioned so source builds work
+# without a separate producer artifact directory. Keep macOS/private files local.
 /src/wechat_decrypt_tool/native/libwechatdb_client.dylib
 /src/wechat_decrypt_tool/native/wechatdb_broker
-/src/wechat_decrypt_tool/native/wechatdb_native_build.json
 /src/wechat_decrypt_tool/native/macos/db-key/
 
 # Retired standalone WeChat ASR artifacts. The private implementation is now

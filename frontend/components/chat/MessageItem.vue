@@ -77,6 +77,12 @@
 
           <MessageContent :message="message" :state="state" />
 
+          <JevMessageInsight
+            v-if="jevInsightVisible(message)"
+            :message="message"
+            :state="state"
+          />
+
           <ContactProfileCard
             v-if="isMentionContactProfileCardForMessage && isMentionContactProfileCardForMessage(message)"
             :state="state"
@@ -92,11 +98,12 @@
 <script>
 import { defineComponent, toRef } from 'vue'
 import ContactProfileCard from '~/components/chat/ContactProfileCard.vue'
+import JevMessageInsight from '~/components/chat/JevMessageInsight.vue'
 import MessageContent from '~/components/chat/MessageContent.vue'
 
 export default defineComponent({
   name: 'MessageItem',
-  components: { ContactProfileCard, MessageContent },
+  components: { ContactProfileCard, JevMessageInsight, MessageContent },
   props: {
     state: { type: Object, required: true },
     message: { type: Object, required: true }
@@ -104,6 +111,7 @@ export default defineComponent({
   setup(props) {
     return {
       ...props.state,
+      jevInsightVisible: typeof props.state.jevInsightVisible === 'function' ? props.state.jevInsightVisible : () => false,
       message: toRef(props, 'message')
     }
   }

@@ -32,6 +32,29 @@
       </div>
       <p class="ais-footnote">密钥仅保存在本机。分析内容将发送至你选择的服务。</p>
 
+      <section class="ais-classifier-card" aria-labelledby="ais-classifier-title">
+        <header>
+          <span class="ais-classifier-icon"><Tags :size="16" :stroke-width="1.8" aria-hidden="true" /></span>
+          <div><h4 id="ais-classifier-title">AI 分类模型</h4><p>用于聊天消息的 Jev 概率分类，并复用一个已连接的 AI 模型生成分类标签。</p></div>
+          <span v-if="classifier.has_api_key" class="ais-tag"><CircleCheck :size="12" :stroke-width="2" aria-hidden="true" />已配置</span>
+          <button type="button" class="ais-classifier-toggle" :aria-expanded="classifierOpen" @click="classifierOpen = !classifierOpen">{{ classifierOpen ? '收起' : '配置' }}</button>
+        </header>
+        <form v-if="classifierOpen" @submit.prevent="saveClassifier">
+          <label class="ais-key-label">
+            <span>TypeSafe / Jev API 密钥 <span v-if="classifier.has_api_key && !classifierKey" class="ais-tag">已保存</span></span>
+            <input v-model="classifierKey" type="password" maxlength="4096" autocomplete="new-password" :placeholder="classifier.has_api_key ? '留空表示保留当前密钥' : '填写 AI 分类模型 API Key'" />
+          </label>
+          <label>复用的 AI 模型
+            <UiSelect v-model="classifier.generator_profile_id" label="复用的 AI 模型" :options="classifierProfileOptions" />
+            <small class="ais-muted">选择“跟随当前模型”时，会使用 AI 助手当前选择的模型。</small>
+          </label>
+          <footer>
+            <span>分类密钥和模型选择仅保存在本机。</span>
+            <div><button v-if="classifier.has_api_key" type="button" :disabled="busy" @click="clearClassifierKey">清除密钥</button><button class="ais-primary" type="submit" :disabled="busy || (!classifier.has_api_key && !classifierKey.trim())"><Check :size="16" :stroke-width="1.8" aria-hidden="true" />保存分类设置</button></div>
+          </footer>
+        </form>
+      </section>
+
       <Teleport to="body">
       <div v-if="dialogStep" class="ais-dialog-overlay" @pointerdown="onBackdropPointerDown" @pointerup="onBackdropPointerUp" @pointercancel="backdropPressed = false" @click="onBackdropClick" @keydown.stop="onDialogKeydown">
       <section ref="dialogPanel" class="ai-settings ais-dialog" :class="{ 'ais-provider-picker': dialogStep === 'providers' }" role="dialog" aria-modal="true" aria-labelledby="ais-dialog-title" tabindex="-1">
@@ -136,7 +159,7 @@
 </template>
 
 <script setup>
-import { ChartBar, ChartNoAxesColumn, Check, ChevronRight, CircleCheck, Download, Image as ImageIcon, LoaderCircle, Lock, Plug, Plus, RefreshCw, Search, Trash2, WandSparkles, X } from '@lucide/vue'
+import { ChartBar, ChartNoAxesColumn, Check, ChevronRight, CircleCheck, Download, Image as ImageIcon, LoaderCircle, Lock, Plug, Plus, RefreshCw, Search, Tags, Trash2, WandSparkles, X } from '@lucide/vue'
 import AiModelMetadata from './AiModelMetadata.vue'
 import LocalSearchSettings from './LocalSearchSettings.vue'
 import AiProviderIcon from './AiProviderIcon.vue'
@@ -230,6 +253,13 @@ const onDialogKeydown = event => {
 const api = useAiApi()
 const profiles = ref([]), presets = ref([]), models = ref([]), editId = ref(''), key = ref('')
 const busy = ref(false), error = ref(''), notice = ref(''), usage = ref(null)
+const classifierOpen = ref(false)
+const classifierKey = ref('')
+const classifier = reactive({ has_api_key: false, configured: false, generator_profile_id: '', generator_configured: false })
+const classifierProfileOptions = computed(() => [
+  { value: '', label: '跟随当前模型', description: '与 AI 助手共用模型' },
+  ...profiles.value.map(profile => ({ value: profile.id, label: profile.name, description: profile.model }))
+])
 const testing = ref(false)
 const audit = ref([]), hasMoreAudit = ref(false)
 const statusLabel = (status) => ({ success: '成功', failed: '失败', cancelled: '已取消', interrupted: '已中断', running: '执行中' }[status] || (status ? '未知状态' : '历史成功调用'))
@@ -312,10 +342,22 @@ const action = async (fn) => {
   try { await fn() } catch (e) { error.value = e.message } finally { busy.value = false }
 }
 const load = async () => {
-  const data = await api.request('/settings')
+  const [data, classifierData] = await Promise.all([api.request('/settings'), api.request('/jev/settings')])
   profiles.value = data.profiles; presets.value = data.presets
+  Object.assign(classifier, classifierData); classifierKey.value = ''
   await loadAudit()
 }
+const saveClassifier = () => action(async () => {
+  const saved = await api.request('/jev/settings', { method: 'PUT', body: {
+    api_key: classifierKey.value.trim() || (classifier.has_api_key ? null : ''),
+    generator_profile_id: classifier.generator_profile_id || ''
+  } })
+  Object.assign(classifier, saved); classifierKey.value = ''; notice.value = 'AI 分类模型设置已保存'
+})
+const clearClassifierKey = () => action(async () => {
+  const saved = await api.request('/jev/settings', { method: 'PUT', body: { api_key: '', generator_profile_id: classifier.generator_profile_id || '' } })
+  Object.assign(classifier, saved); classifierKey.value = ''; notice.value = 'AI 分类模型密钥已清除'
+})
 const reset = () => { invalidateModels(); editId.value = ''; key.value = ''; credentialsReset.value = false; manualModel.value = false; Object.assign(form, blank()) }
 const edit = (p) => {
   if (!dialogStep.value) returnFocus = document.activeElement

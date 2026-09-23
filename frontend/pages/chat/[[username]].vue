@@ -35,6 +35,7 @@ import { useApi } from '~/composables/useApi'
 import { createEmptySearchContext, useChatSearch } from '~/composables/chat/useChatSearch'
 import { useChatSessions } from '~/composables/chat/useChatSessions'
 import { useChatMessages } from '~/composables/chat/useChatMessages'
+import { useJevMessageInsights } from '~/composables/chat/useJevMessageInsights'
 import { useChatExport } from '~/composables/chat/useChatExport'
 import { useChatEditing } from '~/composables/chat/useChatEditing'
 import { useChatHistoryWindows } from '~/composables/chat/useChatHistoryWindows'
@@ -271,6 +272,12 @@ const {
   onContactCardMouseEnter,
   toggleReverseMessageSides
 } = messageState
+
+const jevInsightState = useJevMessageInsights({
+  selectedAccount,
+  selectedContact,
+  renderMessages
+})
 
 const groupAnnouncement = ref('')
 const groupAnnouncementOpen = ref(false)
@@ -1310,6 +1317,7 @@ const chatState = {
   isTransferOverdue,
   isTransferReturned,
   ...messageState,
+  ...jevInsightState,
   ...searchState,
   ...exportState,
   ...editingState,
